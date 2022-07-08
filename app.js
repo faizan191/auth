@@ -1,6 +1,6 @@
 //jshint esversion:6
 
-
+require('dotenv').config()
 const express = require('express');
 const ejs = require('ejs');
 const bodyParser = require('body-parser')
@@ -15,9 +15,10 @@ const userSchema = mongoose.Schema({
     password: String
 })
 
-const secret = "thisianotagoodsecret";
+console.log(process.env.API_KEY);
+
 // adding plugin to the schema and encrypt only to password
-userSchema.plugin(encrypt,{secret:secret, encryptedFields:['password']});
+userSchema.plugin(encrypt,{secret:process.env.SECRET, encryptedFields:['password']});
 
 const User = mongoose.model('User',userSchema);
 
@@ -75,5 +76,5 @@ app.post('/login',  (req, res) => {
 
 
 app.listen(5001, () => {
-    console.log(`Server started on 5001`);
+    console.log(`Server started on 5002`);
 });
