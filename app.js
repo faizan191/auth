@@ -37,7 +37,8 @@ mongoose.connect('mongodb://localhost:27017/userDB',{useNewUrlParser: true});
 const userSchema = mongoose.Schema({
     email: String,
     password: String,
-    googleId: String
+    googleId: String,
+    secret: String
 })
 
 //Passport-Local Mongoose is a Mongoose plugin that simplifies building username and password login with Passport.
@@ -74,7 +75,7 @@ passport.use(new GoogleStrategy({
     userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo'
   },
   function(accessToken, refreshToken, profile, cb) {
-    console.log(profile);
+    // console.log(profile);
 
     User.findOrCreate({ googleId: profile.id }, function (err, user) {
       return cb(err, user);
@@ -87,6 +88,31 @@ app.get('/', (req, res) => {
     res.render('home')
 });
 
+app.get('/submit', (req, res) => {
+    if(req.isAuthenticated()){
+        res.render('submit');
+    } else{
+        res.redirect('/login');
+    }
+});
+
+app.post('/submit', (req, res) => {
+    const submittedSecret = req.body.secret;
+    console.log(req.user);
+    
+    User.findById(req.user.id, function(err, foundUser){
+        if(err){
+            console.log(err);
+        } else{
+            if(foundUser){
+                foundUser.secret = submittedSecret;
+                foundUser.save();
+                res.redirect('/secrets')
+            }
+        }
+    })
+
+});
 
 app.get('/auth/google',passport.authenticate('google', { scope: ['profile'] }));
 
@@ -103,14 +129,21 @@ app.get('/login', (req, res) => {
     res.render('login')
 });
 
+
 app.get('/secrets', (req, res) => {
-    //if the user already logged in 
-    if(req.isAuthenticated()){
-        res.render('secrets')
-    }else{
-        res.redirect('/login')
-    }
+    console.log(req.user);
+    User.find({'secret':{$ne: null}},function(err, foundUsers){
+        if(err){
+            console.log(err);
+        }else{
+            if(foundUsers){
+                //console.log(foundUsers);
+                res.render('secrets',{usersWithSecret:foundUsers})
+            }
+        }
+    })
 }); 
+
 
 app.get('/register', (req, res) => {
     res.render('register')
